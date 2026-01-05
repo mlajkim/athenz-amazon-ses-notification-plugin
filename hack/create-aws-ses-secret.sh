@@ -42,6 +42,7 @@ if [ -z "${TRIMMED_SMTP_PASSWORD}" ]; then
   echo -e "${RED}[Error] SMTP Password cannot be empty!${NC}"
   exit 1
 fi
+echo ""
 
 # 2. Namespace
 read -p "👉 Target K8s Namespace? [Hit enter for default: athenz]: " INPUT_NS
@@ -56,6 +57,7 @@ SECRET_NAME=${INPUT_SECRET:-$DEFAULT_SECRET_NAME}
 ##################################################################
 
 echo -e "👷 Creating a new secret..."
+kubectl delete secret "$SECRET_NAME" -n "$NAMESPACE" --ignore-not-found
 kubectl create secret generic "$SECRET_NAME" \
   --from-literal=username="$TRIMMED_SMTP_USERNAME" \
   --from-literal=password="$TRIMMED_SMTP_PASSWORD" \
