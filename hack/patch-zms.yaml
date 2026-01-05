@@ -1,0 +1,26 @@
+spec:
+  template:
+    spec:
+      containers:
+      - name: athenz-zms-server
+        env:
+        - name: AWS_SES_USER
+          valueFrom:
+            secretKeyRef:
+              name: aws-ses-secret
+              key: username
+        - name: AWS_SES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: aws-ses-secret
+              key: password
+        - name: USER_CLASSPATH
+          value: "/usr/lib/jars/*:/athenz/plugins/*"
+        volumeMounts:
+        - name: ses-plugin-vol
+          mountPath: /usr/lib/jars/ses-plugin.jar
+          subPath: ses-plugin.jar
+      volumes:
+      - name: ses-plugin-vol
+        configMap:
+          name: ses-plugin-lib

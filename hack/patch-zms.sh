@@ -7,18 +7,25 @@ set -e
 # shellcheck disable=SC1091
 source "$(dirname "$0")/colors.sh"
 
-
 ##################################################################
 ### Shellscript Intro  ###########################################
 ##################################################################
-
-# None
+echo -e "${CYAN}============================================${NC}"
+echo -e "${CYAN}   🔧 Athenz Deployment Patch Wizard       ${NC}"
+echo -e "${CYAN}============================================${NC}"
 
 ##################################################################
 ### Prerequisites Check ##########################################
 ##################################################################
 
-# None
+# Get the yaml file path:
+SCRIPT_DIR="$(dirname "$0")"
+PATCH_FILE="${SCRIPT_DIR}/patch-zms.yaml"
+if [ ! -f "$PATCH_FILE" ]; then
+  echo -e "${RED}[Error] Patch file not found at: $PATCH_FILE${NC}"
+  echo -e "${YELLOW}Please ensure 'patch-zms.yaml' exists in the hack/ directory.${NC}"
+  exit 1
+fi
 
 ##################################################################
 ### Interactive User Prompt ######################################
@@ -27,29 +34,29 @@ source "$(dirname "$0")/colors.sh"
 DEFAULT_NS="athenz"
 DEFAULT_DEPLOY="athenz-zms-server"
 
+echo ""
+
 # 2. Namespace
-read -p "👉 Athenz ZMS Server Namespace? [Hit enter for default: athenz]: " INPUT_NS
+read -p "👉 Athenz ZMS Server Namespace? [Hit enter for default: $DEFAULT_NS]: " INPUT_NS
 NAMESPACE=${INPUT_NS:-$DEFAULT_NS}
 
 # 4. Deployment Name
-read -p "👉 Athenz ZMS Server Deployment Name in ns [$NAMESPACE]? [Hit enter for default: athenz-zms-server]: " INPUT_DEPLOY
+read -p "👉 Athenz ZMS Server Deployment Name in ns [$NAMESPACE]? [Hit enter for default: $DEFAULT_DEPLOY]: " INPUT_DEPLOY
 ZMS_DEPLOYMENT=${INPUT_DEPLOY:-$DEFAULT_DEPLOY}
 
 echo -e "\n${CYAN}--- Summary ----------------------${NC}"
 echo -e "Namespace             : ${GREEN}$NAMESPACE${NC}"
-echo -e "ConfigMap             : ${GREEN}$CM_NAME${NC}"
 echo -e "Athenz ZMS Deployment : ${GREEN}$ZMS_DEPLOYMENT${NC}"
-echo -e "Jar File              : ${GREEN}$JAR_PATH${NC}"
-echo -e "Restart?              : ${GREEN}$RESTART${NC}"
+echo -e "Patch File            : ${GREEN}$PATCH_FILE${NC}"
 echo -e "${CYAN}------------------------------------${NC}\n"
-
 
 ##################################################################
 ### Core LOGIC ###################################################
 ##################################################################
 
-path="/usr/lib/jars"
-pod_name=$(kubectl get pod -n $NAMESPACE -l app.kubernetes.io/name=$ZMS_DEPLOYMENT -o jsonpath="{.items[0].metadata.name}")
-echo -e "🔍 Checking JAR file in path [$path] of pod [$pod_name]..."
+echo -e "📦 Applying Patch to Deployment..."
 
-kubectl exec -n $NAMESPACE $pod_name -- ls -al $path
+# Apply the patch using kubectl:
+kubectl patch deployment "$ZMS_DEPLOYMENT" -n "$NAMESPACE" --patch-file "$PATCH_FILE"
+
+echo -e "${GREEN}✅ Successfully Patched! Environment variables and Volumes are updated.${NC}"

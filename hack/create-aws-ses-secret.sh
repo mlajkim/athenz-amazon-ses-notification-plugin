@@ -7,11 +7,12 @@ set -e
 # shellcheck disable=SC1091
 source "$(dirname "$0")/colors.sh"
 
+
 ##################################################################
 ### Shellscript Intro  ###########################################
 ##################################################################
 echo -e "${CYAN}==============================================${NC}"
-echo -e "${CYAN}     🚀 Athenz Plugin Deployment Wizard       ${NC}"
+echo -e "${CYAN}       🔐 AWS SES Secret Creation Wizard       ${NC}"
 echo -e "${CYAN}==============================================${NC}"
 
 ##################################################################
@@ -40,49 +41,38 @@ fi
 ##################################################################
 
 DEFAULT_NS="athenz"
-DEFAULT_CM="ses-plugin-lib"
-DEFAULT_DEPLOY="athenz-zms-server"
+DEFAULT_SECRET_NAME="aws-ses-secret"
+
+# SMTP Username, with quick trim & not empty check
+read -p "👉 Your AWS SES SMTP Username: " SMTP_USERNAME
+TRIMMED_SMTP_USERNAME=$(echo -e "${SMTP_USERNAME}" | tr -d '[:space:]')
+if [ -z "${TRIMMED_SMTP_USERNAME}" ]; then
+  echo -e "${RED}[Error] SMTP Username cannot be empty!${NC}"
+  exit 1
+fi
+
+# SMTP Password, with quick trim & not empty check
+read -s -p "👉 Your AWS SES SMTP Password: " SMTP_PASSWORD
+TRIMMED_SMTP_PASSWORD=$(echo -e "${SMTP_PASSWORD}" | tr -d '[:space:]')
+if [ -z "${TRIMMED_SMTP_PASSWORD}" ]; then
+  echo -e "${RED}[Error] SMTP Password cannot be empty!${NC}"
+  exit 1
+fi
 
 # 2. Namespace
 read -p "👉 Target K8s Namespace? [Hit enter for default: athenz]: " INPUT_NS
 NAMESPACE=${INPUT_NS:-$DEFAULT_NS}
 
-# 3. ConfigMap Name
-read -p "👉 K8s ConfigMap Name? [Hit enter for default: ses-plugin-lib]: " INPUT_CM
-CM_NAME=${INPUT_CM:-$DEFAULT_CM}
-
-# 5. Restart Confirmation
-read -p "👉 Restart Athenz ZMS Server after update? (Any non-Y is no) [Hit enter for default: Y]: " INPUT_RESTART
-RESTART=${INPUT_RESTART:-Y}
-
-# 4. Deployment Name
-read -p "👉 Athenz ZMS Server Deployment Name in ns [$NAMESPACE]? [Hit enter for default: athenz-zms-server]: " INPUT_DEPLOY
-ZMS_DEPLOYMENT=${INPUT_DEPLOY:-$DEFAULT_DEPLOY}
-
-echo -e "\n${CYAN}--- Summary ----------------------${NC}"
-echo -e "Namespace             : ${GREEN}$NAMESPACE${NC}"
-echo -e "ConfigMap             : ${GREEN}$CM_NAME${NC}"
-echo -e "Athenz ZMS Deployment : ${GREEN}$ZMS_DEPLOYMENT${NC}"
-echo -e "Jar File              : ${GREEN}$JAR_PATH${NC}"
-echo -e "Restart?              : ${GREEN}$RESTART${NC}"
-echo -e "${CYAN}------------------------------------${NC}\n"
-
+# Secret Name
+read -p "👉 K8s Secret Name to create? [Hit enter for default: $DEFAULT_SECRET_NAME]: " INPUT_SECRET
+SECRET_NAME=${INPUT_SECRET:-$DEFAULT_SECRET_NAME}
 
 ##################################################################
 ### Core LOGIC ###################################################
 ##################################################################
 
 echo -e "👷 Creating a new package..."
-mvn clean package
-
-echo -e "📦 Updating ConfigMap..."
-kubectl delete cm "$CM_NAME" -n "$NAMESPACE" --ignore-not-found
-kubectl create cm "$CM_NAME" --from-file=ses-plugin.jar="$JAR_PATH" -n "$NAMESPACE"
-
-if [[ "$RESTART" =~ ^[Yy]$ ]]; then
-  echo -e "🔄 Restarting Deployment..."
-  kubectl rollout restart deployment "$ZMS_DEPLOYMENT" -n "$NAMESPACE"
-  echo -e "${GREEN}✅ Done! Athenz ZMS Deployment restarted.${NC}"
-else
-  echo -e "${YELLOW}✋ Skipping Athenz ZMS Deployment restart. Only ConfigMap updated.${NC}"
-fi
+kubectl create secret generic "$SECRET_NAME" \
+  --from-literal=username="$TRIMMED_SMTP_USERNAME" \
+  --from-literal=password="$TRIMMED_SMTP_PASSWORD" \
+  -n "$NAMESPACE"
