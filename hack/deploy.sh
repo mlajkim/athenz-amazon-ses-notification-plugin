@@ -44,11 +44,11 @@ DEFAULT_CM="ses-plugin-lib"
 DEFAULT_DEPLOY="athenz-zms-server"
 
 # 2. Namespace
-read -p "👉 Target K8s Namespace? [Hit enter for default: athenz]: " INPUT_NS
+read -p "👉 Target K8s Namespace? [Hit enter for default: $DEFAULT_NS]: " INPUT_NS
 NAMESPACE=${INPUT_NS:-$DEFAULT_NS}
 
 # 3. ConfigMap Name
-read -p "👉 K8s ConfigMap Name? [Hit enter for default: ses-plugin-lib]: " INPUT_CM
+read -p "👉 K8s ConfigMap Name? [Hit enter for default: $DEFAULT_CM]: " INPUT_CM
 CM_NAME=${INPUT_CM:-$DEFAULT_CM}
 
 # 5. Restart Confirmation

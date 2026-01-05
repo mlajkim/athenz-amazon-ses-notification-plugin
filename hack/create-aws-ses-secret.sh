@@ -45,7 +45,7 @@ fi
 echo ""
 
 # 2. Namespace
-read -p "👉 Target K8s Namespace? [Hit enter for default: athenz]: " INPUT_NS
+read -p "👉 Target K8s Namespace? [Hit enter for default: $DEFAULT_NS]: " INPUT_NS
 NAMESPACE=${INPUT_NS:-$DEFAULT_NS}
 
 # Secret Name
