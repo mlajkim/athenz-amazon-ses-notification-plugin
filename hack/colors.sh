@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC2034
 # ANSI Color Codes
 GREEN='\033[0;32m'
 RED='\033[0;31m'
