@@ -3,6 +3,7 @@
 <!-- TOC -->
 
 - [athenz-amazon-ses-notification-plugin](#athenz-amazon-ses-notification-plugin)
+- [Main feature](#main-feature)
 - [Init this project](#init-this-project)
   - [Read the official documentation.](#read-the-official-documentation)
   - [How I first created this project.](#how-i-first-created-this-project)
@@ -12,6 +13,10 @@
   - [Create k8s cm based on the jar](#create-k8s-cm-based-on-the-jar)
 
 <!-- /TOC -->
+
+# Main feature
+
+🟡 TODO: Make a PR for a gif to show this feature!
 
 # Init this project
 
