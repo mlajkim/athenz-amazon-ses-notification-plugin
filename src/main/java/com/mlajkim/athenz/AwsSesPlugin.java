@@ -4,7 +4,7 @@ import com.yahoo.athenz.auth.PrivateKeyStore;
 import com.yahoo.athenz.common.server.notification.*;
 
 import jakarta.mail.*;
-import jakarta.mail.internet.*; 
+import jakarta.mail.internet.*;
 import java.util.*;
 
 public class AwsSesPlugin implements NotificationServiceFactory {
