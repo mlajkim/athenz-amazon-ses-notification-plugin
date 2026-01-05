@@ -25,7 +25,7 @@ echo -e "${CYAN}==============================================${NC}"
 ##################################################################
 
 DEFAULT_NS="athenz"
-DEFAULT_DB_POD_NAME="athenz-db"
+DEFAULT_DB_POD_NAME="athenz-db-0"
 DEFAULT_DEPLOY="athenz-zms-server"
 
 # 2. Namespace
@@ -46,12 +46,54 @@ echo -e "DB Pod Name           : ${GREEN}$DB_POD_NAME${NC}"
 echo -e "Athenz ZMS Deployment : ${GREEN}$ZMS_DEPLOYMENT${NC}"
 echo -e "${CYAN}------------------------------------${NC}\n"
 
+##################################################################
+### User Guide ###################################################
+##################################################################
+
+EXPLANATION_STEPS=(
+  "👋  Hi! Let me briefly explain how this test scenario works."
+  "💡  Athenz sends notifications on startup, but enforces a 24-hour cooldown (v1.12.31 logic)."
+  "⏳  Since the last notification time is saved, we normally have to wait 24 hours."
+  "😈  But we can't wait! We will connect to the DB and NULLIFY the last notification timestamp."
+  "🔄  Then, we'll restart the ZMS server to force the notification trigger check."
+  "📜  We will automatically tail the ZMS logs to verify the trigger."
+  "📧  Finally, please check your personal email inbox manually."
+)
+
+echo -e "\n${YELLOW}--- [Scenario Briefing] ----------------------${NC}"
+for step in "${EXPLANATION_STEPS[@]}"; do
+  echo -e "$step"
+  sleep 3  # Pause for 1 second for dramatic effect & readability
+done
+echo -e "${YELLOW}----------------------------------------------${NC}\n"
 
 ##################################################################
 ### Core LOGIC ###################################################
 ##################################################################
 
-# First quickly explain how this works:
-echo -e "ℹ️  This script will connect to the Athenz DB pod [$DB_POD_NAME] in namespace [$NAMESPACE],"
-echo -e "   and insert a test notification record into the notification table."
-echo -e "   Then it will restart the Athenz ZMS server deployment [$ZMS_DEPLOYMENT] to trigger the notification plugin to process it.\n"
+echo -e "🚀 Starting the sequence..."
+
+DB_NAME=zms_server
+
+SQL_UPDATE="USE ${DB_NAME}; UPDATE pending_role_member SET last_notified_time = NULL;"
+SQL_SELECT="USE ${DB_NAME}; SELECT role_id, principal_id, req_time, last_notified_time, server FROM pending_role_member;"
+
+# Show current record
+echo -e "🔍 Connecting to $DB_POD_NAME to show current notification records..."
+kubectl exec -i "$DB_POD_NAME" -n "$NAMESPACE" -- mariadb -u"$DB_USER" "$DB_PASS" "$DB_NAME" -e "$SQL_SELECT"
+
+# Nullify last notification timestamp in DB:
+echo -e "🛠  Connecting to $DB_POD_NAME to nullify notification record..."
+kubectl exec -i "$DB_POD_NAME" -n "$NAMESPACE" -- mariadb -u"$DB_USER" "$DB_PASS" "$DB_NAME" -e "$SQL_UPDATE"
+sleep 1 # Small pause for DB update to take effect
+
+# See the updated record:
+echo -e "🔍 Verifying the update in $DB_POD_NAME..."
+kubectl exec -i "$DB_POD_NAME" -n "$NAMESPACE" -- mariadb -u"$DB_USER" "$DB_PASS" "$DB_NAME" -e "$SQL_SELECT"
+
+# Restart ZMS Deployment:
+echo -e "🔄 Restarting ZMS Deployment ($ZMS_DEPLOYMENT)..."
+kubectl rollout restart deployment "$ZMS_DEPLOYMENT" -n "$NAMESPACE"
+
+# echo -e "👀 Watching logs... (Hit ^ + c to quit)"
+# kubectl logs -f deployment/"$ZMS_DEPLOYMENT" -n "$NAMESPACE"
