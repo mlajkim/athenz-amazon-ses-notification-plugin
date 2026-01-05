@@ -58,5 +58,3 @@ echo -e "📦 Applying Patch to Deployment..."
 
 # Apply the patch using kubectl:
 kubectl patch deployment "$ZMS_DEPLOYMENT" -n "$NAMESPACE" --patch-file "$PATCH_FILE"
-
-echo -e "${GREEN}✅ Successfully Patched! Environment variables and Volumes are updated.${NC}"
