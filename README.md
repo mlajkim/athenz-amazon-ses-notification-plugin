@@ -4,6 +4,7 @@
 
 - [athenz-amazon-ses-notification-plugin](#athenz-amazon-ses-notification-plugin)
 - [Main feature](#main-feature)
+- [How to deploy locally](#how-to-deploy-locally)
 - [Init this project](#init-this-project)
   - [Read the official documentation.](#read-the-official-documentation)
   - [How I first created this project.](#how-i-first-created-this-project)
@@ -17,6 +18,12 @@
 # Main feature
 
 🟡 TODO: Make a PR for a gif to show this feature!
+
+# How to deploy locally
+
+```sh
+make
+```
 
 # Init this project
 
