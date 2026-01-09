@@ -18,6 +18,15 @@ public class AwsSesPlugin implements NotificationServiceFactory {
 
 class SesService implements NotificationService {
 
+    private static final String EMAIL_BODY_TEMPLATE = "Dear Athenz User,\n\n"
+            + "This is an automated notification from the Athenz system.\n\n"
+            + "Details:\n"
+            + "%s\n\n"
+            + "Please review this information and take appropriate action.\n\n"
+            + "Thank you,\n"
+            + "The Athenz Team\n\n"
+            + "(This is an auto-generated email, please do not reply.)";
+
     private static final String SMTP_USER = System.getenv("AWS_SES_USER");
     private static final String SMTP_PASS = System.getenv("AWS_SES_PASS");
     private static final String SMTP_HOST = "email-smtp.ap-northeast-1.amazonaws.com";
@@ -58,14 +67,16 @@ class SesService implements NotificationService {
 
             System.out.println(">>> [AWS-SES] Attempting to send email to recipients: " + String.join(", ", recipients));
 
-            String subject = "Athenz Alert (No Subject)";
-            String body = "Check Athenz UI.";
+            String subject = "Athenz Notification";
+            String body = "This is an automated notification from Athenz.";
 
             Map<String, String> details = notification.getDetails();
             if (details != null) {
                 subject = details.getOrDefault("subject", subject);
                 body = details.getOrDefault("body", body);
             }
+
+            String emailBody = String.format(EMAIL_BODY_TEMPLATE, body);
 
             for (String recipient : recipients) {
                 String targetEmail = recipient + "@gmail.com";
@@ -80,7 +91,7 @@ class SesService implements NotificationService {
                     msg.setRecipient(Message.RecipientType.TO, new InternetAddress(targetEmail));
 
                     msg.setSubject(subject);
-                    msg.setText(body, "UTF-8");
+                    msg.setText(emailBody, "UTF-8");
 
                     Transport.send(msg);
                     System.out.println(">>> [AWS-SES] Sent to: " + recipient);
